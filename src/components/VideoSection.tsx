@@ -111,7 +111,7 @@ const VideoSection = () => {
         >
           <span className="text-primary">URGENT:</span>{" "}
           <span className="text-foreground">
-            Scientists uncover a natural cure for Memory Loss that can be made at home
+            The natural cure for memory loss that can be made at home has been revealed
           </span>
         </motion.h1>
 
