@@ -44,7 +44,7 @@ export const PricingBanner = () => {
     seconds: initialState?.seconds ?? 0 
   });
   const [timerExpired, setTimerExpired] = useState(initialState?.expired ?? false);
-  const [bottlesRemaining, setBottlesRemaining] = useState(initialState?.bottles ?? 123);
+  const [bottlesRemaining, setBottlesRemaining] = useState(initialState?.bottles ?? 173);
 
   // Timer only starts when the event is fired, not from cache
   const [isActive, setIsActive] = useState(false);
@@ -131,9 +131,9 @@ export const PricingBanner = () => {
   return (
     <div id="pricing-banner" className="bg-black rounded-lg md:rounded-xl py-4 px-3 md:py-8 md:px-6 mb-6 md:mb-10 text-center border border-border">
       <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-white mb-3 md:mb-4 leading-tight">
-        Choose Your Discounted BrainXCell Package
+        You are among the first 20 people
         <br />
-        <span className="text-[#FCD34D]">With Our Special Time-Limited Offer!</span>
+        <span className="text-[#FCD34D]">and will receive a one-on-one online consultation with Dr. Peter Attia, a signed physical book, and a masterclass if you purchase one of the packages below</span>
       </h2>
       <p className="text-xs md:text-base text-white mb-2 md:mb-3">
         Valid only until <span className="font-bold text-[#FCD34D]">{formattedDate}</span>
