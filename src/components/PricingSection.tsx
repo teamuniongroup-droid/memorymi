@@ -54,13 +54,13 @@ const PackageCard = ({
 }: PackageProps) => {
   
   const getCardBackground = () => {
-    if (isBestValue) return "bg-[#5C0000]";
+    if (isBestValue) return "bg-gradient-radial";
     if (isGoodValue) return "bg-white";
     return "bg-white";
   };
 
   const getHeaderStyle = () => {
-    return "bg-[#C40812] text-white";
+    return "bg-black text-white";
   };
 
   const isLight = !isBestValue;
@@ -83,7 +83,8 @@ const PackageCard = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       whileHover={{ scale: 1.02 }}
-      className={`relative ${getCardBackground()} rounded-xl sm:rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.25)] transition-all border-2 sm:border-4 border-[#C40812] ${mobileOrder || ''}`}
+      className={`relative ${getCardBackground()} rounded-xl sm:rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.25)] transition-all border-2 sm:border-4 border-black ${mobileOrder || ''}`}
+      style={isBestValue ? { background: 'radial-gradient(circle, #135ED3 0%, #2135B8 100%)' } : {}}
     >
       {/* Header Badge */}
       <div 
@@ -99,7 +100,7 @@ const PackageCard = ({
           {/* Left Column: Title + Image */}
           <div className="flex flex-col items-center w-2/5 flex-shrink-0">
             <p 
-              className={`font-display text-2xl font-black tracking-tight text-center ${isBestValue ? "text-[#22c55e]" : textColor}`}
+              className={`font-display text-2xl font-black tracking-tight text-center ${isBestValue ? "text-white" : textColor}`}
               style={isBestValue ? { 
                 WebkitTextStroke: '1.5px #000', 
                 paintOrder: 'stroke fill'
@@ -108,7 +109,7 @@ const PackageCard = ({
                 paintOrder: 'stroke fill'
               }}
             >
-              {bottles} BOTTLES
+              {isBestValue ? "BUY 3 GET + 3 FREE" : `${bottles} BOTTLES`}
             </p>
             <p className={`text-xs font-normal text-center ${subTextColor}`}>{supply} Supply</p>
             <img 
@@ -122,25 +123,22 @@ const PackageCard = ({
           <div className="flex flex-col flex-1 items-center">
             {/* Price */}
             <div className="text-center mb-2">
-              <span 
-                className="text-lg font-bold text-[#C40812] line-through decoration-black block"
-                style={{ WebkitTextStroke: `1px ${isBestValue ? '#fff' : '#000'}`, paintOrder: 'stroke fill' }}
-              >
-                ${originalPrice}
-              </span>
-              <span 
-                className={`font-display text-6xl font-black inline-block ${isBestValue ? "text-[#00BF63]" : "text-[#facc15]"}`}
-                style={{ 
-                  WebkitTextStroke: `3px ${isBestValue ? '#fff' : '#000'}`,
-                  paintOrder: 'stroke fill',
-                  ...(isBestValue ? {} : { textShadow: '3px 3px 0 rgba(0,0,0,0.3)' })
-                }}
-              >
-                ${salePrice}
-              </span>
+              <div className="flex items-baseline justify-center">
+                <span 
+                  className={`font-display text-6xl font-black inline-block ${isBestValue ? "text-[#00BF63]" : "text-[#facc15]"}`}
+                  style={{ 
+                    WebkitTextStroke: `3px ${isBestValue ? '#fff' : '#000'}`,
+                    paintOrder: 'stroke fill',
+                    ...(isBestValue ? {} : { textShadow: '3px 3px 0 rgba(0,0,0,0.3)' })
+                  }}
+                >
+                  ${perBottle}
+                </span>
+                <span className={`text-sm font-black uppercase leading-tight ml-1 ${isBestValue ? "text-white" : "text-gray-900"}`}>PER<br/>BOTTLE</span>
+              </div>
               <div className="relative inline-flex items-center justify-center py-1 px-3 mt-1">
-                <p className={`text-base font-extrabold ${isBestValue ? "text-white" : "text-gray-900"} relative z-10`}>
-                  ${perBottle} Per Bottle
+                <p className={`font-extrabold ${isBestValue ? "text-white" : "text-gray-900"} relative z-10`}>
+                  Total: <span className="line-through text-[#C40812] text-sm">${originalPrice}</span> <span className="text-base text-[#22c55e]">${salePrice}</span>
                 </p>
                 <svg 
                   className="absolute pointer-events-none" 
@@ -204,7 +202,7 @@ const PackageCard = ({
                 60 DAY GUARANTEE
               </li>
               {hasSurprise && (
-                <li className="flex items-center gap-2 text-sm font-bold text-[#45A9AE]">
+                <li className="flex items-center gap-2 text-sm font-bold text-[#facc15]">
                   <span className="w-5 h-5 flex-shrink-0" />
                   +SURPRISE 🎁
                 </li>
@@ -218,13 +216,13 @@ const PackageCard = ({
           {/* Title */}
           <div className="text-center mb-2">
             <p 
-              className={`font-display text-2xl md:text-3xl font-black tracking-tight ${isBestValue ? "text-[#22c55e]" : textColor}`}
+              className={`font-display text-2xl md:text-3xl font-black tracking-tight ${isBestValue ? "text-white" : textColor}`}
               style={isBestValue ? { 
                 WebkitTextStroke: '1.5px #000', 
                 paintOrder: 'stroke fill'
               } : {}}
             >
-              {bottles} BOTTLES
+              {isBestValue ? "BUY 3 GET + 3 FREE" : `${bottles} BOTTLES`}
             </p>
             <p className={`text-sm font-normal ${subTextColor}`}>{supply} Supply</p>
           </div>
@@ -240,13 +238,7 @@ const PackageCard = ({
 
           {/* Main Price */}
           <div className="text-center mb-2 overflow-visible">
-            <div className="flex items-baseline justify-center gap-2 pt-2 pb-1">
-              <span 
-                className="text-lg font-bold text-[#C40812] line-through decoration-black"
-                style={{ WebkitTextStroke: `1px ${isBestValue ? '#fff' : '#000'}`, paintOrder: 'stroke fill' }}
-              >
-                ${originalPrice}
-              </span>
+            <div className="flex items-baseline justify-center gap-1 pt-2 pb-1">
               <span 
                 className={`font-display text-5xl md:text-6xl font-black inline-block ${isBestValue ? "text-[#00BF63]" : "text-[#facc15]"}`}
                 style={{ 
@@ -255,12 +247,13 @@ const PackageCard = ({
                   ...(isBestValue ? {} : { textShadow: '3px 3px 0 rgba(0,0,0,0.3)' })
                 }}
               >
-                ${salePrice}
+                ${perBottle}
               </span>
+              <span className={`text-sm md:text-base font-black uppercase leading-tight ${isBestValue ? "text-white" : "text-gray-900"}`}>PER<br/>BOTTLE</span>
             </div>
             <div className="relative inline-flex items-center justify-center py-3 px-2">
-              <p className={`text-sm font-extrabold ${isBestValue ? "text-white" : "text-gray-900"} relative z-10`}>
-                ${perBottle} Per Bottle
+              <p className={`font-extrabold ${isBestValue ? "text-white" : "text-gray-900"} relative z-10`}>
+                Total: <span className="line-through text-[#C40812] text-sm">${originalPrice}</span> <span className="text-base text-[#22c55e]">${salePrice}</span>
               </p>
               <svg 
                 className="absolute pointer-events-none" 
@@ -357,7 +350,7 @@ const PackageCard = ({
           {/* Surprise */}
           {hasSurprise && (
             <div className="text-center mb-3">
-              <span className="inline-flex items-center gap-1 text-[#45A9AE] font-bold text-base">
+              <span className="inline-flex items-center gap-1 text-[#facc15] font-bold text-base">
                 +SURPRISE 🎁
               </span>
             </div>
@@ -380,19 +373,15 @@ const PackageCard = ({
           <img src={paymentCards} alt="Visa, Mastercard, Discover, American Express" className="h-5 sm:h-6 w-auto" />
         </div>
 
-        {/* Total */}
+        {/* Order now */}
         <div className="text-center mt-2 sm:mt-3 text-xs sm:text-sm font-bold">
           <p className={textColor}>
-            TOTAL: <span className="line-through">${originalPrice}</span>{" "}
-            <span>${salePrice}</span>
+            📦 Order now & receive by <span className="text-[#C40812] font-extrabold">{(() => {
+              const d = new Date();
+              d.setDate(d.getDate() + 4);
+              return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            })()}</span>!
           </p>
-          {hasShipping ? (
-            <p className={textColor}>+ ${shippingCost} SHIPPING</p>
-          ) : (
-            <p className={isBestValue ? "text-[#facc15]" : ""}>
-              {isBestValue ? "+FREE SHIPPING" : <><span className="text-[#C40812]">+FREE</span> <span className="text-gray-900">SHIPPING</span></>}
-            </p>
-          )}
         </div>
       </div>
     </motion.div>
@@ -405,12 +394,12 @@ const PricingSection = () => {
       title: "Basic",
       bottles: 2,
       supply: "60 Day",
-      originalPrice: 294,
+      originalPrice: 198,
       salePrice: 158,
       perBottle: 79,
       originalPerBottle: 217,
-      savings: "$136",
-      discount: "46%",
+      savings: "$40",
+      discount: "20%",
       features: [],
       hasShipping: true,
       shippingCost: "9.99",
@@ -423,12 +412,12 @@ const PricingSection = () => {
       title: "Best Value",
       bottles: 6,
       supply: "180 Day",
-      originalPrice: 882,
+      originalPrice: 588,
       salePrice: 294,
       perBottle: 49,
       originalPerBottle: 588,
-      savings: "$588",
-      discount: "67%",
+      savings: "$294",
+      discount: "50%",
       features: ["3 FREE BOTTLES"],
       isBestValue: true,
       hasSurprise: true,
@@ -441,12 +430,12 @@ const PricingSection = () => {
       title: "Good value!",
       bottles: 3,
       supply: "90 Day",
-      originalPrice: 441,
+      originalPrice: 297,
       salePrice: 207,
       perBottle: 69,
       originalPerBottle: 392,
-      savings: "$234",
-      discount: "53%",
+      savings: "$90",
+      discount: "30%",
       features: ["1 FREE BOTTLE"],
       isGoodValue: true,
       image: bottles3,
