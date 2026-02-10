@@ -133,7 +133,7 @@ export const PricingBanner = () => {
       <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-white mb-3 md:mb-4 leading-tight">
         You are among the first 20 people
         <br />
-        <span className="text-[#FCD34D]">and will receive a one-on-one online consultation with Dr. Peter Attia when you get BrainXCell below</span>
+        <span className="text-[#FCD34D]">and will receive a one-on-one online consultation with Dr. Peter Attia when you get your BrainXCell below</span>
       </h2>
       <p className="text-xs md:text-base text-white mb-2 md:mb-3">
         Valid only until <span className="font-bold text-[#FCD34D]">{formattedDate}</span>
