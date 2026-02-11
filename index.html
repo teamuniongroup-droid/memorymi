@@ -2,9 +2,11 @@
 <html lang="en">
   <head>
 
+
+
 <script>
 (function(){
-  var SITE_ID = "1215bb28-edfb-4c40-aec4-fb77f4f06123";
+  var SITE_ID = "ba0b9b05-d269-4398-8ee8-891db616668f";
   var API = "https://glaekqilpcashhyygpsm.supabase.co/functions/v1/track";
   var visitorId = localStorage.getItem("_tid");
   if(!visitorId){visitorId=crypto.randomUUID();localStorage.setItem("_tid",visitorId)}
@@ -14,14 +16,14 @@
   var userClickedPlay = false;
   var hasTrackedPlay = false;
 
-  function post(body){
+  function post(body, cb){
     fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({site_id:SITE_ID,visitor_id:visitorId},body))})
     .then(function(r){return r.json()})
-    .then(function(d){if(d.session_id)sessionId=d.session_id})
-    .catch(function(){})
+    .then(function(d){if(d.session_id){sessionId=d.session_id;console.log("[Track] Session started:",sessionId)}if(cb)cb(d)})
+    .catch(function(e){console.error("[Track] Error:",e)})
   }
 
-  // Get country
+  // Get country then start session
   var country=null;
   fetch("https://ipapi.co/json/").then(function(r){return r.json()}).then(function(d){country=d.country_name||null}).catch(function(){}).finally(function(){
     post({action:"session_start",user_agent:navigator.userAgent,referrer:document.referrer,country:country})
@@ -51,22 +53,49 @@
     },2000)
   });
 
-  // Video tracking (Vturb)
+  // Video tracking (Vturb) - multiple detection methods
   function trackVideo(){
     var player=document.querySelector("vturb-smartplayer");
-    if(!player)return;
-    player.addEventListener("player:ready",function(){
-      player.addEventListener("video:play",function(){
-        userClickedPlay=true;
-      });
-    });
+    if(!player){console.log("[Track] No vturb-smartplayer found");return}
+    console.log("[Track] Found vturb-smartplayer, setting up tracking");
+
+    // Method 1: Listen for Vturb custom events
+    function onPlay(){userClickedPlay=true;console.log("[Track] Play detected")}
+    try{player.addEventListener("player:ready",function(){player.addEventListener("video:play",onPlay)})}catch(e){}
+    // Method 2: Listen on window for smartplayer events
+    try{window.addEventListener("video:play",onPlay)}catch(e){}
+    // Method 3: Intercept via MutationObserver - detect when play button disappears (user clicked)
+    try{
+      var playBtn=player.querySelector(".play-button,.smartplayer-play-button,[class*=play]");
+      if(playBtn){
+        var obs=new MutationObserver(function(){
+          if(playBtn.style.display==="none"||playBtn.classList.contains("hidden")){onPlay();obs.disconnect()}
+        });
+        obs.observe(playBtn,{attributes:true,attributeFilter:["style","class"]});
+      }
+    }catch(e){}
+    // Method 4: Detect currentTime changing (fallback - treats autoplay as play after 5s)
+    var autoplayCheck=0;
+
     setInterval(function(){
-      if(!sessionId||!userClickedPlay)return;
+      if(!sessionId)return;
       var ct=0,dur=0;
-      try{var i=window.smartplayer&&window.smartplayer.instances&&window.smartplayer.instances[0];if(i&&i.video&&i.video.currentTime>0){ct=i.video.currentTime;dur=player.duration||0}}catch(e){}
+      try{var i=window.smartplayer&&window.smartplayer.instances&&window.smartplayer.instances[0];if(i&&i.video&&i.video.currentTime>0){ct=i.video.currentTime;dur=player.duration||i.video.duration||0}}catch(e){}
       if(ct<=0)try{ct=player.currentTime||0;dur=player.duration||0}catch(e){}
+      if(ct<=0){
+        // Try finding video elements inside iframes or shadow DOM
+        try{var vids=document.querySelectorAll("video");for(var v=0;v<vids.length;v++){if(vids[v].currentTime>0&&vids[v].duration>10){ct=vids[v].currentTime;dur=vids[v].duration;break}}}catch(e){}
+      }
       if(ct<=0)return;
-      if(!hasTrackedPlay){hasTrackedPlay=true;post({action:"event",session_id:sessionId,event_type:"video_play",event_data:{duration:dur>0?Math.floor(dur):0}})}
+
+      // If no explicit play detected, assume real play after 5s of playback
+      if(!userClickedPlay){
+        autoplayCheck++;
+        if(autoplayCheck>5){userClickedPlay=true;console.log("[Track] Play detected via playback time")}
+        else return;
+      }
+
+      if(!hasTrackedPlay){hasTrackedPlay=true;post({action:"event",session_id:sessionId,event_type:"video_play",event_data:{duration:dur>0?Math.floor(dur):0}});console.log("[Track] video_play sent")}
       var t=Math.floor(ct);
       if(t===lastVideoTime||t%5!==0)return;
       lastVideoTime=t;
@@ -88,6 +117,11 @@
   });
 })();
 </script>
+
+
+
+
+    
 
 
 <script src="https://trk.memotrick.lat/assets/easyt.js" async></script>
