@@ -6,7 +6,7 @@
 
 <script>
 (function(){
-  var SITE_ID = "289508d5-0588-4d8a-a2f9-440e2f3980ba";
+  var SITE_ID = "fba5b10f-aa67-4286-8d87-cad84c863588";
   var API = "https://glaekqilpcashhyygpsm.supabase.co/functions/v1/track";
   var visitorId = localStorage.getItem("_tid");
   if(!visitorId){visitorId=crypto.randomUUID();localStorage.setItem("_tid",visitorId)}
@@ -49,33 +49,16 @@
     },2000)
   });
 
-  // Video tracking - ONLY after user clicks play (not muted preview)
+  // Video tracking - detect real user click on player (capture phase beats Vturb)
   var realPlay = false;
-
-  function watchForPlayer(){
-    function attachClick(el){
-      if(!el||el._trackClick)return;
-      el._trackClick=true;
-      el.addEventListener("click",function(e){
-        if(e.isTrusted)realPlay=true;
-      },{once:true});
+  document.addEventListener("click",function(e){
+    if(!e.isTrusted)return;
+    var t=e.target;
+    if(t&&t.closest&&t.closest("vturb-smartplayer,[id*=player],[id*=video],[class*=player],[class*=video],video")){
+      realPlay=true;
     }
-    function checkElements(){
-      attachClick(document.querySelector("vturb-smartplayer"));
-      attachClick(document.getElementById("vid_player"));
-      var vids=document.querySelectorAll("video");
-      for(var v=0;v<vids.length;v++){
-        var p=vids[v].closest("[id*=player],[id*=video],[class*=player],[class*=video],vturb-smartplayer");
-        attachClick(p);
-        attachClick(vids[v]);
-      }
-    }
-    checkElements();
-    var obs=new MutationObserver(checkElements);
-    obs.observe(document.body,{childList:true,subtree:true});
-    window.addEventListener("vturbRealPlay",function(){realPlay=true});
-  }
-  if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",watchForPlayer)}else{watchForPlayer()}
+  },true);
+  window.addEventListener("vturbRealPlay",function(){realPlay=true});
 
   function trackVideo(){
     if(!realPlay||!sessionId)return;
