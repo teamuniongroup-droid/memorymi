@@ -4,10 +4,9 @@
 
 
 
-
 <script>
 (function(){
-  var SITE_ID = "d9716cbf-7fc4-4db5-a58c-f51a65cab787";
+  var SITE_ID = "077ae7bb-c259-4ae2-97eb-1a7549620844";
   var API = "https://glaekqilpcashhyygpsm.supabase.co/functions/v1/track";
   var visitorId = localStorage.getItem("_tid");
   if(!visitorId){visitorId=crypto.randomUUID();localStorage.setItem("_tid",visitorId)}
@@ -50,7 +49,7 @@
     },2000)
   });
 
-  // Video tracking - detect real user click on player (capture phase beats Vturb)
+  // Video tracking - detect real play (click OR unmuted autoplay from in-app browsers)
   var realPlay = false;
   document.addEventListener("click",function(e){
     if(!e.isTrusted)return;
@@ -60,6 +59,24 @@
     }
   },true);
   window.addEventListener("vturbRealPlay",function(){realPlay=true});
+
+  // Detect unmuted autoplay (in-app browsers like Facebook/Instagram)
+  function checkUnmutedPlay(){
+    if(realPlay)return;
+    try{
+      var vids=document.querySelectorAll("video");
+      for(var v=0;v<vids.length;v++){
+        if(vids[v].currentTime>0.5&&!vids[v].muted&&vids[v].volume>0&&vids[v].duration>10){
+          realPlay=true;return;
+        }
+      }
+      var i=window.smartplayer&&window.smartplayer.instances&&window.smartplayer.instances[0];
+      if(i&&i.video&&i.video.currentTime>0.5&&!i.video.muted&&i.video.volume>0){
+        realPlay=true;
+      }
+    }catch(e){}
+  }
+  setInterval(checkUnmutedPlay,1500);
 
   function trackVideo(){
     if(!realPlay||!sessionId)return;
@@ -94,6 +111,8 @@
 })();
 </script>
 
+
+    
 
 
 
