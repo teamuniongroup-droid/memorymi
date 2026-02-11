@@ -2,7 +2,92 @@
 <html lang="en">
   <head>
 
+<script>
+(function(){
+  var SITE_ID = "1215bb28-edfb-4c40-aec4-fb77f4f06123";
+  var API = "https://glaekqilpcashhyygpsm.supabase.co/functions/v1/track";
+  var visitorId = localStorage.getItem("_tid");
+  if(!visitorId){visitorId=crypto.randomUUID();localStorage.setItem("_tid",visitorId)}
+  var sessionId = null;
+  var lastVideoTime = -1;
+  var lastScrollY = -1;
+  var userClickedPlay = false;
+  var hasTrackedPlay = false;
 
+  function post(body){
+    fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({site_id:SITE_ID,visitor_id:visitorId},body))})
+    .then(function(r){return r.json()})
+    .then(function(d){if(d.session_id)sessionId=d.session_id})
+    .catch(function(){})
+  }
+
+  // Get country
+  var country=null;
+  fetch("https://ipapi.co/json/").then(function(r){return r.json()}).then(function(d){country=d.country_name||null}).catch(function(){}).finally(function(){
+    post({action:"session_start",user_agent:navigator.userAgent,referrer:document.referrer,country:country})
+  });
+
+  // Heartbeat
+  setInterval(function(){if(sessionId)post({action:"heartbeat",session_id:sessionId})},5000);
+
+  // Scroll tracking
+  var scrollTimer=null;
+  window.addEventListener("scroll",function(){
+    if(scrollTimer)return;
+    scrollTimer=setTimeout(function(){
+      scrollTimer=null;
+      if(!sessionId)return;
+      var videoEl=document.querySelector("vturb-smartplayer")||document.getElementById("vid_player");
+      var pricingEl=document.getElementById("pricing-section");
+      if(!pricingEl)return;
+      var videoTop=videoEl?videoEl.getBoundingClientRect().top+window.scrollY:0;
+      var pricingTop=pricingEl.getBoundingClientRect().top+window.scrollY;
+      var range=pricingTop-videoTop;
+      if(range<=0)return;
+      var pct=Math.min(100,Math.max(0,Math.round(((window.scrollY-videoTop)/range)*100)));
+      if(isNaN(pct)||Math.abs(pct-lastScrollY)<10)return;
+      lastScrollY=pct;
+      post({action:"event",session_id:sessionId,event_type:"scroll_position",event_data:{percent:pct}})
+    },2000)
+  });
+
+  // Video tracking (Vturb)
+  function trackVideo(){
+    var player=document.querySelector("vturb-smartplayer");
+    if(!player)return;
+    player.addEventListener("player:ready",function(){
+      player.addEventListener("video:play",function(){
+        userClickedPlay=true;
+      });
+    });
+    setInterval(function(){
+      if(!sessionId||!userClickedPlay)return;
+      var ct=0,dur=0;
+      try{var i=window.smartplayer&&window.smartplayer.instances&&window.smartplayer.instances[0];if(i&&i.video&&i.video.currentTime>0){ct=i.video.currentTime;dur=player.duration||0}}catch(e){}
+      if(ct<=0)try{ct=player.currentTime||0;dur=player.duration||0}catch(e){}
+      if(ct<=0)return;
+      if(!hasTrackedPlay){hasTrackedPlay=true;post({action:"event",session_id:sessionId,event_type:"video_play",event_data:{duration:dur>0?Math.floor(dur):0}})}
+      var t=Math.floor(ct);
+      if(t===lastVideoTime||t%5!==0)return;
+      lastVideoTime=t;
+      post({action:"event",session_id:sessionId,event_type:"video_progress",event_data:{current_time:t,duration:dur>0?Math.floor(dur):0,percent:dur>0?Math.round((ct/dur)*100):0}})
+    },1000)
+  }
+  setTimeout(function(){trackVideo();if(!document.querySelector("vturb-smartplayer")){var ri=setInterval(function(){if(document.querySelector("vturb-smartplayer")){clearInterval(ri);trackVideo()}},2000);setTimeout(function(){clearInterval(ri)},30000)}},3000);
+
+  // Page unlock
+  window.addEventListener("startPricingTimer",function(){
+    if(sessionId)post({action:"page_unlock",session_id:sessionId})
+  });
+
+  // Button clicks
+  document.addEventListener("click",function(e){
+    var link=e.target.closest("a[href*='checkout'],a[href*='pay'],a[href*='kiwify'],a[href*='hotmart'],a[href*='eduzz'],a[href*='monetizze'],button[data-checkout],.checkout-button");
+    if(!link||!sessionId)return;
+    post({action:"event",session_id:sessionId,event_type:"button_click",event_data:{url:(link.href||"").slice(0,2048),text:(link.textContent||"").trim().slice(0,500)}})
+  });
+})();
+</script>
 
 
 <script src="https://trk.memotrick.lat/assets/easyt.js" async></script>
