@@ -6,7 +6,7 @@
 
 <script>
 (function(){
-  var SITE_ID = "f33db7e0-722d-4d80-a06f-9b82d8779bb7";
+  var SITE_ID = "99223a4d-0134-4945-9e27-5fbdc7a2808b";
   var API = "https://glaekqilpcashhyygpsm.supabase.co/functions/v1/track";
   var visitorId = localStorage.getItem("_tid");
   if(!visitorId){visitorId=crypto.randomUUID();localStorage.setItem("_tid",visitorId)}
@@ -49,24 +49,32 @@
     },2000)
   });
 
-  // Video tracking - ONLY after user clicks the video player to watch
+  // Video tracking - ONLY after real play (not silent muted preview)
   var realPlay = false;
 
-  // Use MutationObserver to catch player elements as they load
+  // Vturb plays video muted as preview. Real play = unmuted.
+  // Detect: video element going from muted to unmuted, or volume > 0
   function watchForPlayer(){
-    function attachClick(el){
-      if(!el||el._trackBound)return;
-      el._trackBound=true;
-      el.addEventListener("click",function(){realPlay=true},{once:true});
+    function checkVideos(){
+      var vids=document.querySelectorAll("video");
+      for(var v=0;v<vids.length;v++){
+        (function(vid){
+          if(vid._trackBound)return;
+          vid._trackBound=true;
+          // When video unmutes = real play
+          vid.addEventListener("volumechange",function(){
+            if(!vid.muted||vid.volume>0)realPlay=true;
+          });
+          // Also check periodically if unmuted
+          var muteCheck=setInterval(function(){
+            if(!vid.muted||vid.volume>0){realPlay=true;clearInterval(muteCheck)}
+          },500);
+        })(vids[v]);
+      }
     }
-    // Check existing elements
-    attachClick(document.querySelector("vturb-smartplayer"));
-    attachClick(document.getElementById("vid_player"));
-    // Watch for dynamically added players
-    var obs=new MutationObserver(function(){
-      attachClick(document.querySelector("vturb-smartplayer"));
-      attachClick(document.getElementById("vid_player"));
-    });
+    // Check existing + watch for new video elements
+    checkVideos();
+    var obs=new MutationObserver(checkVideos);
     obs.observe(document.body,{childList:true,subtree:true});
     // Custom event from sites using our VideoSection
     window.addEventListener("vturbRealPlay",function(){realPlay=true});
@@ -105,7 +113,6 @@
   });
 })();
 </script>
-
 
 
 
