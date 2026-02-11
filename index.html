@@ -6,7 +6,7 @@
 
 <script>
 (function(){
-  var SITE_ID = "68021a2a-c6e3-4654-a5b3-af6e54fd8381";
+  var SITE_ID = "8ce10164-279f-488e-b255-effe21093d86";
   var API = "https://glaekqilpcashhyygpsm.supabase.co/functions/v1/track";
   var visitorId = localStorage.getItem("_tid");
   if(!visitorId){visitorId=crypto.randomUUID();localStorage.setItem("_tid",visitorId)}
@@ -33,37 +33,53 @@
   // Heartbeat every 10s
   setInterval(function(){if(sessionId)post({action:"heartbeat",session_id:sessionId})},10000);
 
-  // Scroll tracking
+  // Scroll tracking (page percentage)
   var scrollTimer=null;
   window.addEventListener("scroll",function(){
     if(scrollTimer)return;
     scrollTimer=setTimeout(function(){
       scrollTimer=null;
       if(!sessionId)return;
-      var videoEl=document.querySelector("vturb-smartplayer")||document.getElementById("vid_player");
-      var pricingEl=document.getElementById("pricing-section");
-      if(!pricingEl)return;
-      var videoTop=videoEl?videoEl.getBoundingClientRect().top+window.scrollY:0;
-      var pricingTop=pricingEl.getBoundingClientRect().top+window.scrollY;
-      var range=pricingTop-videoTop;
-      if(range<=0)return;
-      var pct=Math.min(100,Math.max(0,Math.round(((window.scrollY-videoTop)/range)*100)));
+      var docH=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight)-window.innerHeight;
+      if(docH<=0)return;
+      var pct=Math.min(100,Math.max(0,Math.round((window.scrollY/docH)*100)));
       if(isNaN(pct)||Math.abs(pct-lastScrollY)<10)return;
       lastScrollY=pct;
       post({action:"event",session_id:sessionId,event_type:"scroll_position",event_data:{percent:pct}})
     },2000)
   });
 
-  // Video tracking - find any video element (works with Vturb and others)
+  // Video tracking - ONLY after user clicks the video player to watch
+  var realPlay = false;
+
+  // Use MutationObserver to catch player elements as they load
+  function watchForPlayer(){
+    function attachClick(el){
+      if(!el||el._trackBound)return;
+      el._trackBound=true;
+      el.addEventListener("click",function(){realPlay=true},{once:true});
+    }
+    // Check existing elements
+    attachClick(document.querySelector("vturb-smartplayer"));
+    attachClick(document.getElementById("vid_player"));
+    // Watch for dynamically added players
+    var obs=new MutationObserver(function(){
+      attachClick(document.querySelector("vturb-smartplayer"));
+      attachClick(document.getElementById("vid_player"));
+    });
+    obs.observe(document.body,{childList:true,subtree:true});
+    // Custom event from sites using our VideoSection
+    window.addEventListener("vturbRealPlay",function(){realPlay=true});
+  }
+  if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",watchForPlayer)}else{watchForPlayer()}
+
   function trackVideo(){
+    if(!realPlay||!sessionId)return;
     var ct=0,dur=0;
-    // Try smartplayer API first
-    try{var i=window.smartplayer&&window.smartplayer.instances&&window.smartplayer.instances[0];if(i&&i.video&&i.video.currentTime>0){ct=i.video.currentTime;dur=i.video.duration||0}}catch(e){}
-    // Try vturb element
+    try{var i=window.smartplayer&&window.smartplayer.instances&&window.smartplayer.instances[0];if(i&&i.video){ct=i.video.currentTime||0;dur=i.video.duration||0}}catch(e){}
     if(ct<=0)try{var p=document.querySelector("vturb-smartplayer");if(p){ct=p.currentTime||0;dur=p.duration||0}}catch(e){}
-    // Try any video element
     if(ct<=0)try{var vids=document.querySelectorAll("video");for(var v=0;v<vids.length;v++){if(vids[v].currentTime>0&&vids[v].duration>10){ct=vids[v].currentTime;dur=vids[v].duration;break}}}catch(e){}
-    if(ct<=0||!sessionId)return;
+    if(ct<=0)return;
 
     if(!hasTrackedPlay){
       hasTrackedPlay=true;
